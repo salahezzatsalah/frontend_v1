@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Orcista — Operations Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0f19;
+      --surface: #141927;
+      --surface2: #1c2436;
+      --border: #252e44;
+      --accent: #4f8ef7;
+      --accent2: #7c53f5;
+      --green: #22c55e;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --text: #e2e8f0;
+      --text-muted: #6b7a9a;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      position: fixed;
+      height: 100vh;
+    }
+
+    .logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span { display: block; font-size: 0.65rem; font-weight: 400; color: var(--text-muted); -webkit-text-fill-color: var(--text-muted); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+    nav { padding: 16px 12px; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: linear-gradient(135deg, rgba(79,142,247,0.15), rgba(124,83,245,0.15)); color: var(--accent); border: 1px solid rgba(79,142,247,0.2); }
+
+    .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    /* ── Main ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .page-title { font-size: 1.125rem; font-weight: 600; }
+    .api-status { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{ opacity:1 } 50%{ opacity:.4 } }
+
+    .content { padding: 32px; flex: 1; }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-card:hover { transform: translateY(-2px); border-color: rgba(79,142,247,0.3); }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79,142,247,0.08) 0%, transparent 70%);
+    }
+
+    .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+    .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-icon { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; opacity: 0.4; }
+    .stat-change { font-size: 0.75rem; margin-top: 8px; color: var(--green); }
+
+    /* ── Table ── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-title { font-size: 1rem; font-weight: 600; }
+
+    .tab-bar { display: flex; gap: 4px; background: var(--surface2); padding: 4px; border-radius: 8px; }
+    .tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+    }
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    thead { background: var(--surface2); border-bottom: 1px solid var(--border); }
+    th { padding: 12px 16px; text-align: left; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px; white-space: nowrap; }
+    td { padding: 12px 16px; border-bottom: 1px solid rgba(37,46,68,0.5); white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-green { background: rgba(34,197,94,0.1); color: var(--green); }
+    .badge-amber { background: rgba(245,158,11,0.1); color: var(--amber); }
+    .badge-red { background: rgba(239,68,68,0.1); color: var(--red); }
+    .badge-blue { background: rgba(79,142,247,0.1); color: var(--accent); }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      color: var(--text-muted);
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      padding: 16px 24px;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 8px;
+      color: var(--red);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">🎼 Orcista<span>Operations Dashboard</span></div>
+    <nav id="nav">
+      <div class="nav-item active" data-section="reservations" onclick="switchSection('reservations', this)">
+        <span class="nav-icon">🚗</span> Reservations
+      </div>
+      <div class="nav-item" data-section="invoices" onclick="switchSection('invoices', this)">
+        <span class="nav-icon">📄</span> Invoices
+      </div>
+      <div class="nav-item" data-section="clients" onclick="switchSection('clients', this)">
+        <span class="nav-icon">👥</span> Clients
+      </div>
+      <div class="nav-item" data-section="drivers" onclick="switchSection('drivers', this)">
+        <span class="nav-icon">🧑‍✈️</span> Drivers
+      </div>
+      <div class="nav-item" data-section="payments" onclick="switchSection('payments', this)">
+        <span class="nav-icon">💳</span> Payments
+      </div>
+      <div class="nav-item" data-section="schema" onclick="switchSection('schema', this)">
+        <span class="nav-icon">🗄️</span> Schema Explorer
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main">
+    <header>
+      <div class="page-title" id="pageTitle">Reservations</div>
+      <div class="api-status">
+        <div class="dot" id="statusDot"></div>
+        <span id="statusText">Connected to Oracle DB</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-label">Total Records</div>
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-icon">📊</div>
+          <div class="stat-change" id="statSource">Loading...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">API Endpoint</div>
+          <div class="stat-value" style="font-size:0.9rem;margin-top:8px;" id="statEndpoint">—</div>
+          <div class="stat-icon">🔗</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Response Time</div>
+          <div class="stat-value" id="statTime">—</div>
+          <div class="stat-icon">⚡</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">DB Schema</div>
+          <div class="stat-value" style="font-size:0.9rem;margin-top:8px;">DEV_SCHEMA</div>
+          <div class="stat-icon">🏛️</div>
+          <div class="stat-change">Oracle Autonomous DB</div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="section-header">
+        <div class="section-title" id="tableTitle">Limo Reservations</div>
+        <button onclick="refreshData()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.8rem;">🔄 Refresh</button>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <div id="tableContainer" class="loading">
+            <div class="spinner"></div>
+            <span>Loading data from Oracle...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Config — Update this to your backend URL ──
+  const API_BASE = 'http://127.0.0.1:8000';
+
+  const SECTIONS = {
+    reservations: { endpoint: '/api/v1/reservations', title: 'Limo Reservations', label: 'Reservations' },
+    invoices:     { endpoint: '/api/v1/invoices',     title: 'Invoices',          label: 'Invoices' },
+    clients:      { endpoint: '/api/v1/clients',      title: 'Clients',           label: 'Clients' },
+    drivers:      { endpoint: '/api/v1/drivers',      title: 'Company Drivers',   label: 'Drivers' },
+    payments:     { endpoint: '/api/v1/payments',     title: 'Payments',          label: 'Payments' },
+    schema:       { endpoint: '/schema/tables',       title: 'Schema Explorer',   label: 'Schema' },
+  };
+
+  let currentSection = 'reservations';
+
+  function switchSection(section, el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    currentSection = section;
+    const cfg = SECTIONS[section];
+    document.getElementById('pageTitle').textContent = cfg.label;
+    document.getElementById('tableTitle').textContent = cfg.title;
+    refreshData();
+  }
+
+  async function refreshData() {
+    const cfg = SECTIONS[currentSection];
+    const container = document.getElementById('tableContainer');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><span>Loading...</span></div>';
+
+    document.getElementById('statEndpoint').textContent = cfg.endpoint;
+    document.getElementById('statSource').textContent = cfg.endpoint;
+
+    const t0 = performance.now();
+    try {
+      const resp = await fetch(`${API_BASE}${cfg.endpoint}?limit=50`);
+      const elapsed = Math.round(performance.now() - t0);
+      document.getElementById('statTime').textContent = `${elapsed}ms`;
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      let data = await resp.json();
+      
+      // Normalize: sometimes API returns list, sometimes {data:[...]}
+      if (Array.isArray(data)) { /* ok */ }
+      else if (data.data) data = data.data;
+      else if (data.tables) data = data.tables.map(t => ({table_name: t}));
+
+      document.getElementById('statTotal').textContent = data.length.toLocaleString();
+      document.getElementById('statusDot').style.background = '#22c55e';
+      document.getElementById('statusText').textContent = 'Connected — Oracle DB Live';
+
+      if (!data.length) {
+        container.innerHTML = '<div class="loading"><span>No records found in this table.</span></div>';
+        return;
+      }
+
+      const cols = Object.keys(data[0]);
+      let html = `<table><thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+
+      data.forEach(row => {
+        html += '<tr>' + cols.map(c => {
+          const v = row[c];
+          if (v === null || v === undefined) return '<td><span style="color:var(--text-muted)">null</span></td>';
+          
+          // Auto-color status columns
+          const key = c.toLowerCase();
+          const val = String(v);
+          if (key.includes('status') || key.includes('state')) {
+            const cls = val.toLowerCase().includes('active') || val.toLowerCase().includes('complete') ? 'green'
+              : val.toLowerCase().includes('cancel') || val.toLowerCase().includes('fail') ? 'red'
+              : val.toLowerCase().includes('pending') ? 'amber' : 'blue';
+            return `<td><span class="badge badge-${cls}">${val}</span></td>`;
+          }
+          return `<td title="${val}">${val}</td>`;
+        }).join('') + '</tr>';
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+    } catch (err) {
+      document.getElementById('statusDot').style.background = '#ef4444';
+      document.getElementById('statusText').textContent = 'Backend Offline';
+      container.innerHTML = `<div style="padding:24px"><div class="error-msg">❌ Failed to connect to backend: <strong>${err.message}</strong><br><br>Make sure the FastAPI server is running:<br><code style="background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px;display:inline-block;margin-top:8px;">python -m uvicorn main:app --reload</code></div></div>`;
+    }
+  }
+
+  // Initial load
+  refreshData();
+</script>
+</body>
+</html>
